@@ -1,0 +1,4 @@
+source;share/wd_lift_robot/local_setup.bash
+source;share/wd_lift_robot/local_setup.dsv
+source;share/wd_lift_robot/local_setup.sh
+source;share/wd_lift_robot/local_setup.zsh
