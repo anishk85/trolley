@@ -3,7 +3,7 @@
 import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import IncludeLaunchDescription, TimerAction, DeclareLaunchArgument, ExecuteProcess
+from launch.actions import IncludeLaunchDescription, TimerAction, DeclareLaunchArgument
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import Command, LaunchConfiguration
 from launch_ros.actions import Node
@@ -18,7 +18,6 @@ def generate_launch_description():
     # Launch arguments
     use_nav2 = LaunchConfiguration('use_nav2')
     use_slam = LaunchConfiguration('use_slam')
-    slam_method = LaunchConfiguration('slam_method')
     
     # Robot Description
     urdf_file = os.path.join(pkg_path, 'urdf', 'robot.urdf.xacro')
@@ -35,7 +34,7 @@ def generate_launch_description():
         PythonLaunchDescriptionSource(
             os.path.join(gazebo_ros_dir, 'launch', 'gazebo.launch.py')
         ),
-        launch_arguments={'verbose': 'true'}.items()
+        launch_arguments={'verbose': 'false'}.items()
     )
     
     # Robot State Publisher
@@ -44,24 +43,12 @@ def generate_launch_description():
         executable='robot_state_publisher',
         name='robot_state_publisher',
         output='screen',
-        parameters=[{
-            'use_sim_time': True, 
-            'robot_description': robot_desc,
-            'publish_frequency': 30.0
-        }]
-    )
-    
-    # Joint State Publisher (fallback if needed)
-    joint_state_publisher = Node(
-        package='joint_state_publisher',
-        executable='joint_state_publisher',
-        name='joint_state_publisher',
-        parameters=[{'use_sim_time': True}]
+        parameters=[{'use_sim_time': True, 'robot_description': robot_desc}]
     )
     
     # Spawn Robot
     spawn_entity = TimerAction(
-        period=3.0,
+        period=2.0,
         actions=[
             Node(
                 package='gazebo_ros',
@@ -72,56 +59,59 @@ def generate_launch_description():
         ]
     )
     
-    # Controller Manager - Start after robot is spawned
+    # Controller Manager
     controller_manager = TimerAction(
-        period=5.0,
+        period=4.0,
         actions=[
             Node(
                 package="controller_manager",
                 executable="ros2_control_node",
-                parameters=[controllers_config],
+                parameters=[controllers_config, {'use_sim_time': True}],
                 output="screen",
-                remappings=[
-                    ('/controller_manager/robot_description', '/robot_description')
-                ]
             )
         ]
     )
     
-    # Load Controllers with proper delays
+    # Load controllers
     load_joint_state_controller = TimerAction(
-        period=7.0,
+        period=6.0,
         actions=[
-            ExecuteProcess(
-                cmd=['ros2', 'control', 'load_controller', '--set-state', 'active', 'joint_state_broadcaster'],
-                output='screen'
-            )
+            Node(
+                package="controller_manager",
+                executable="spawner",
+                arguments=["joint_state_broadcaster", "--controller-manager", "/controller_manager"],
+                output="screen"
+            ),
         ]
     )
     
     load_diff_drive_controller = TimerAction(
         period=8.0,
         actions=[
-            ExecuteProcess(
-                cmd=['ros2', 'control', 'load_controller', '--set-state', 'active', 'diff_drive_controller'],
-                output='screen'
-            )
+            Node(
+                package="controller_manager",
+                executable="spawner",
+                arguments=["diff_drive_controller", "--controller-manager", "/controller_manager"],
+                output="screen"
+            ),
         ]
     )
     
     load_lift_controller = TimerAction(
-        period=9.0,
+        period=10.0,
         actions=[
-            ExecuteProcess(
-                cmd=['ros2', 'control', 'load_controller', '--set-state', 'active', 'lift_controller'],
-                output='screen'
-            )
+            Node(
+                package="controller_manager",
+                executable="spawner",
+                arguments=["lift_controller", "--controller-manager", "/controller_manager"],
+                output="screen"
+            ),
         ]
     )
     
     # RViz
     rviz = TimerAction(
-        period=10.0,
+        period=5.0,
         actions=[
             Node(
                 package='rviz2',
@@ -136,7 +126,7 @@ def generate_launch_description():
     
     # SLAM Toolbox
     slam_toolbox = TimerAction(
-        period=11.0,
+        period=12.0,
         actions=[
             Node(
                 package='slam_toolbox',
@@ -151,7 +141,7 @@ def generate_launch_description():
     
     # Nav2 stack
     nav2_bringup = TimerAction(
-        period=12.0,
+        period=15.0,
         actions=[
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(
@@ -165,24 +155,11 @@ def generate_launch_description():
             )
         ]
     )
-    
-    # Teleop node
-    teleop_node = TimerAction(
-        period=10.0,
-        actions=[
-            Node(
-                package='wd_lift_robot',
-                executable='teleop_node.py',
-                name='teleop_node',
-                output='screen'
-            )
-        ]
-    )
 
     return LaunchDescription([
         DeclareLaunchArgument(
             'use_nav2',
-            default_value='false',  # Start with nav2 disabled for testing
+            default_value='false',
             description='Start Nav2 navigation stack'
         ),
         
@@ -192,15 +169,8 @@ def generate_launch_description():
             description='Start SLAM'
         ),
         
-        DeclareLaunchArgument(
-            'slam_method',
-            default_value='slam_toolbox',
-            description='SLAM method to use'
-        ),
-        
         gazebo,
         robot_state_publisher,
-        joint_state_publisher,
         spawn_entity,
         controller_manager,
         load_joint_state_controller,
@@ -209,5 +179,4 @@ def generate_launch_description():
         rviz,
         slam_toolbox,
         nav2_bringup,
-        teleop_node,
     ])

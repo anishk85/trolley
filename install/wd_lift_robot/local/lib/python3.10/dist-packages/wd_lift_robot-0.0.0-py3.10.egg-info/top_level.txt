@@ -1,1 +1,1 @@
-wd_lift_robot
+/home/anish/your_robot_ws/build/wd_lift_robot/ament_cmake_python/wd_lift_robot/wd_lift_robot.egg-info/top_level.txt

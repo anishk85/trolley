@@ -2,113 +2,51 @@
 
 import rclpy
 from rclpy.node import Node
-from geometry_msgs.msg import Twist
-from std_msgs.msg import Float64MultiArray
+from geometry_msgs.msg import TwistStamped
+from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 import sys
 import select
 import termios
 import tty
 
-msg = """
-Control Your Robot!
----------------------------
-Moving around:
-   u    i    o
-   j    k    l
-   m    ,    .
-
-For Holonomic mode (strafing), hold down the shift key:
----------------------------
-   U    I    O
-   J    K    L
-   M    <    >
-
-t : up (+z)
-b : down (-z)
-
-anything else : stop
-
-q/z : increase/decrease max speeds by 10%
-w/x : increase/decrease only linear speed by 10%
-e/c : increase/decrease only angular speed by 10%
-
-Lift Control:
----------------------------
-r/f : lift up/down
-
-CTRL-C to quit
-"""
-
-moveBindings = {
-    'i': (1, 0, 0, 0),
-    'o': (1, 0, 0, -1),
-    'j': (0, 0, 0, 1),
-    'l': (0, 0, 0, -1),
-    'u': (1, 0, 0, 1),
-    ',': (-1, 0, 0, 0),
-    '.': (-1, 0, 0, 1),
-    'm': (-1, 0, 0, -1),
-    'O': (1, -1, 0, 0),
-    'I': (1, 0, 0, 0),
-    'J': (0, 1, 0, 0),
-    'L': (0, -1, 0, 0),
-    'U': (1, 1, 0, 0),
-    '<': (-1, 0, 0, 0),
-    '>': (-1, -1, 0, 0),
-    'M': (-1, 1, 0, 0),
-    't': (0, 0, 1, 0),
-    'b': (0, 0, -1, 0),
-}
-
-liftBindings = {
-    'r': 0.1,  # lift up
-    'f': -0.1,  # lift down
-}
-
-speedBindings = {
-    'q': (1.1, 1.1),
-    'z': (.9, .9),
-    'w': (1.1, 1),
-    'x': (.9, 1),
-    'e': (1, 1.1),
-    'c': (1, .9),
-}
-
-class TeleopNode(Node):
+class SimpleTeleopNode(Node):
     def __init__(self):
-        super().__init__('teleop_node')
+        super().__init__('simple_teleop_node')
         
-        # Publishers
-        self.cmd_vel_pub = self.create_publisher(Twist, '/cmd_vel', 10)
-        self.lift_pub = self.create_publisher(Float64MultiArray, '/lift_controller/commands', 10)
+        # Publishers - use TwistStamped instead of Twist
+        self.cmd_vel_pub = self.create_publisher(TwistStamped, '/diff_drive_controller/cmd_vel', 10)
+        self.lift_pub = self.create_publisher(JointTrajectory, '/lift_controller/joint_trajectory', 10)
         
-        # Movement parameters
-        self.speed = 0.5
-        self.turn = 1.0
+        # INCREASED movement parameters
+        self.linear_speed = 2.0    # Increased from 0.5
+        self.angular_speed = 2.0   # Increased from 1.0
         self.lift_position = 0.0
+        self.lift_step = 0.1       # Larger step size for lift
         
-        # Terminal settings - handle both terminal and non-terminal environments
+        # Terminal settings
         try:
-            if sys.stdin.isatty():
-                self.settings = termios.tcgetattr(sys.stdin)
-                self.has_terminal = True
-            else:
-                self.has_terminal = False
-                self.get_logger().warn("No terminal detected - teleop may not work properly")
+            self.settings = termios.tcgetattr(sys.stdin)
         except:
-            self.has_terminal = False
-            self.get_logger().warn("Terminal setup failed - using keyboard input mode")
+            print("Error: This script must be run in a terminal")
+            sys.exit(1)
         
-        self.get_logger().info("Teleop node started. Use keyboard to control the robot.")
-        print(msg)
+        self.get_logger().info("Simple WASD Teleop started!")
+        print("\n=== WASD ROBOT CONTROL ===")
+        print("W: Forward")
+        print("S: Backward") 
+        print("A: Turn Left")
+        print("D: Turn Right")
+        print("Q: Lift Up")
+        print("E: Lift Down")
+        print("X: Stop")
+        print("CTRL-C: Quit")
+        print("Press keys to move robot...")
+        print("========================\n")
 
-    def getKey(self, timeout=0.1):
-        if not self.has_terminal:
-            return ''
-            
+    def get_key(self):
         try:
             tty.setcbreak(sys.stdin.fileno())
-            rlist, _, _ = select.select([sys.stdin], [], [], timeout)
+            rlist, _, _ = select.select([sys.stdin], [], [], 0.1)
             if rlist:
                 key = sys.stdin.read(1)
             else:
@@ -118,74 +56,76 @@ class TeleopNode(Node):
         except:
             return ''
 
-    def vels(self, speed, turn):
-        return f"currently:\tspeed {speed:.2f}\tturn {turn:.2f}"
+    def send_lift_command(self, position):
+        """Send lift command using JointTrajectory"""
+        traj = JointTrajectory()
+        traj.joint_names = ['lift_joint']
+        traj.header.stamp = self.get_clock().now().to_msg()
+        
+        point = JointTrajectoryPoint()
+        point.positions = [position]
+        point.velocities = [0.0]  # Add velocity for smoother motion
+        point.time_from_start.sec = 2  # Longer time for smoother motion
+        point.time_from_start.nanosec = 0
+        
+        traj.points = [point]
+        self.lift_pub.publish(traj)
 
     def run(self):
-        x = 0.0
-        y = 0.0
-        z = 0.0
-        th = 0.0
-        status = 0
-
         try:
             while rclpy.ok():
-                key = self.getKey()
-                if key in moveBindings.keys():
-                    x = moveBindings[key][0]
-                    y = moveBindings[key][1]
-                    z = moveBindings[key][2]
-                    th = moveBindings[key][3]
-                elif key in speedBindings.keys():
-                    self.speed = self.speed * speedBindings[key][0]
-                    self.turn = self.turn * speedBindings[key][1]
-
-                    print(self.vels(self.speed, self.turn))
-                    if (status == 14):
-                        print(msg)
-                    status = (status + 1) % 15
-                elif key in liftBindings.keys():
-                    self.lift_position += liftBindings[key]
-                    self.lift_position = max(0.0, min(0.5, self.lift_position))  # Clamp between 0 and 0.5
-                    
-                    # Publish lift command
-                    lift_msg = Float64MultiArray()
-                    lift_msg.data = [self.lift_position]
-                    self.lift_pub.publish(lift_msg)
-                    
-                    print(f"Lift position: {self.lift_position:.2f}")
-                else:
-                    x = 0.0
-                    y = 0.0
-                    z = 0.0
-                    th = 0.0
-                    if (key == '\x03'):  # CTRL-C
-                        break
-
-                # Create and publish twist message
-                twist = Twist()
-                twist.linear.x = x * self.speed
-                twist.linear.y = y * self.speed
-                twist.linear.z = z * self.speed
-                twist.angular.x = 0.0
-                twist.angular.y = 0.0
-                twist.angular.z = th * self.turn
+                key = self.get_key().lower()
                 
-                self.cmd_vel_pub.publish(twist)
-
-        except Exception as e:
-            print(f"Error: {e}")
-
+                # Create TwistStamped message instead of Twist
+                twist_stamped = TwistStamped()
+                twist_stamped.header.stamp = self.get_clock().now().to_msg()
+                twist_stamped.header.frame_id = "base_link"
+                
+                if key == 'w':
+                    twist_stamped.twist.linear.x = self.linear_speed
+                    print("→ Forward")
+                elif key == 's':
+                    twist_stamped.twist.linear.x = -self.linear_speed
+                    print("→ Backward")
+                elif key == 'a':
+                    twist_stamped.twist.angular.z = self.angular_speed
+                    print("→ Turn Left")
+                elif key == 'd':
+                    twist_stamped.twist.angular.z = -self.angular_speed
+                    print("→ Turn Right")
+                elif key == 'q':
+                    self.lift_position += self.lift_step  # Larger step
+                    self.lift_position = min(0.5, self.lift_position)
+                    self.send_lift_command(self.lift_position)
+                    print(f"→ Lift Up: {self.lift_position:.2f}")
+                elif key == 'e':
+                    self.lift_position -= self.lift_step  # Larger step
+                    self.lift_position = max(0.0, self.lift_position)
+                    self.send_lift_command(self.lift_position)
+                    print(f"→ Lift Down: {self.lift_position:.2f}")
+                elif key == 'x':
+                    twist_stamped.twist.linear.x = 0.0
+                    twist_stamped.twist.angular.z = 0.0
+                    print("→ Stop")
+                elif key == '\x03':  # CTRL-C
+                    break
+                
+                # Publish the movement command
+                self.cmd_vel_pub.publish(twist_stamped)
+                
+        except KeyboardInterrupt:
+            pass
         finally:
             # Stop the robot
-            twist = Twist()
-            self.cmd_vel_pub.publish(twist)
-            if self.has_terminal:
-                termios.tcsetattr(sys.stdin, termios.TCSADRAIN, self.settings)
+            stop_twist = TwistStamped()
+            stop_twist.header.stamp = self.get_clock().now().to_msg()
+            stop_twist.header.frame_id = "base_link"
+            self.cmd_vel_pub.publish(stop_twist)
+            termios.tcsetattr(sys.stdin, termios.TCSADRAIN, self.settings)
 
 def main(args=None):
     rclpy.init(args=args)
-    teleop_node = TeleopNode()
+    teleop_node = SimpleTeleopNode()
     
     try:
         teleop_node.run()
