@@ -12,7 +12,6 @@ from launch.conditions import IfCondition
 def generate_launch_description():
     # Package Directories
     pkg_path = get_package_share_directory('wd_lift_robot')
-    gazebo_ros_dir = get_package_share_directory('gazebo_ros')
     nav2_bringup_dir = get_package_share_directory('nav2_bringup')
     
     # Launch arguments
@@ -22,7 +21,7 @@ def generate_launch_description():
     x_pose = LaunchConfiguration('x_pose')
     y_pose = LaunchConfiguration('y_pose')
     
-    # Robot Description
+    # Robot Description - ONLY YOUR ROBOT
     urdf_file = os.path.join(pkg_path, 'urdf', 'robot.urdf.xacro')
     robot_desc = Command(['xacro ', urdf_file])
     
@@ -35,10 +34,11 @@ def generate_launch_description():
     # World file - Use the small_house.world from your package
     world_file = os.path.join(pkg_path, 'worlds', 'small_house.world')
     
-    # Launch Gazebo server with the house world
+    # Launch Gazebo server with CLEAN environment (no TurtleBot3)
     gzserver_cmd = ExecuteProcess(
         cmd=['gzserver', world_file, '--verbose', '-s', 'libgazebo_ros_init.so', '-s', 'libgazebo_ros_factory.so'],
-        output='screen'
+        output='screen',
+        additional_env={'GAZEBO_MODEL_PATH': '', 'TURTLEBOT3_MODEL': ''}  # Clear TurtleBot3 env vars
     )
 
     # Launch Gazebo client
@@ -47,7 +47,7 @@ def generate_launch_description():
         output='screen'
     )
     
-    # Robot State Publisher
+    # Robot State Publisher - ONLY YOUR ROBOT
     robot_state_publisher = Node(
         package='robot_state_publisher',
         executable='robot_state_publisher',
@@ -56,7 +56,7 @@ def generate_launch_description():
         parameters=[{'use_sim_time': use_sim_time, 'robot_description': robot_desc}]
     )
     
-    # Spawn Robot at specific position in the house
+    # Spawn ONLY YOUR ROBOT - wd_lift_robot
     spawn_entity = TimerAction(
         period=3.0,
         actions=[
@@ -65,10 +65,13 @@ def generate_launch_description():
                 executable='spawn_entity.py',
                 arguments=[
                     '-topic', 'robot_description', 
-                    '-entity', 'wd_lift_robot',
+                    '-entity', 'wd_lift_robot',  # Unique entity name
                     '-x', x_pose,
                     '-y', y_pose,
-                    '-z', '0.1'  # Slightly above ground
+                    '-z', '0.05',
+                    '-R', '0',
+                    '-P', '0',
+                    '-Y', '0'
                 ],
                 output='screen'
             )
@@ -142,7 +145,7 @@ def generate_launch_description():
     
     # SLAM Toolbox
     slam_toolbox = TimerAction(
-        period=13.0,
+        period=12.0,
         actions=[
             Node(
                 package='slam_toolbox',
@@ -193,13 +196,13 @@ def generate_launch_description():
         
         DeclareLaunchArgument(
             'x_pose',
-            default_value='0.0',  # Center of the house
+            default_value='-2.0',
             description='Initial x position of robot'
         ),
         
         DeclareLaunchArgument(
             'y_pose',
-            default_value='0.0',  # Center of the house
+            default_value='-0.5',
             description='Initial y position of robot'
         ),
         
@@ -207,7 +210,7 @@ def generate_launch_description():
         gzserver_cmd,
         gzclient_cmd,
         
-        # Robot components
+        # Robot components - ONLY YOUR ROBOT
         robot_state_publisher,
         spawn_entity,
         controller_manager,

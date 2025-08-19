@@ -1,1 +1,8 @@
-/home/anish/your_robot_ws/build/wd_lift_robot/ament_cmake_python/wd_lift_robot/wd_lift_robot.egg-info/SOURCES.txt
+setup.py
+wd_lift_robot/__init__.py
+wd_lift_robot/simple_teleop_node.py
+wd_lift_robot/teleop_node.py
+wd_lift_robot.egg-info/PKG-INFO
+wd_lift_robot.egg-info/SOURCES.txt
+wd_lift_robot.egg-info/dependency_links.txt
+wd_lift_robot.egg-info/top_level.txt

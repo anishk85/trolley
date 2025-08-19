@@ -198,17 +198,17 @@ wd_lift_robot_uninstall/fast:
 .PHONY : wd_lift_robot_uninstall/fast
 
 #=============================================================================
-# Target rules for targets named ament_cmake_python_symlink_wd_lift_robot
+# Target rules for targets named ament_cmake_python_copy_wd_lift_robot
 
 # Build rule for target.
-ament_cmake_python_symlink_wd_lift_robot: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 ament_cmake_python_symlink_wd_lift_robot
-.PHONY : ament_cmake_python_symlink_wd_lift_robot
+ament_cmake_python_copy_wd_lift_robot: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 ament_cmake_python_copy_wd_lift_robot
+.PHONY : ament_cmake_python_copy_wd_lift_robot
 
 # fast build rule for target.
-ament_cmake_python_symlink_wd_lift_robot/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ament_cmake_python_symlink_wd_lift_robot.dir/build.make CMakeFiles/ament_cmake_python_symlink_wd_lift_robot.dir/build
-.PHONY : ament_cmake_python_symlink_wd_lift_robot/fast
+ament_cmake_python_copy_wd_lift_robot/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ament_cmake_python_copy_wd_lift_robot.dir/build.make CMakeFiles/ament_cmake_python_copy_wd_lift_robot.dir/build
+.PHONY : ament_cmake_python_copy_wd_lift_robot/fast
 
 #=============================================================================
 # Target rules for targets named ament_cmake_python_build_wd_lift_robot_egg
@@ -237,7 +237,7 @@ help:
 	@echo "... rebuild_cache"
 	@echo "... test"
 	@echo "... ament_cmake_python_build_wd_lift_robot_egg"
-	@echo "... ament_cmake_python_symlink_wd_lift_robot"
+	@echo "... ament_cmake_python_copy_wd_lift_robot"
 	@echo "... uninstall"
 	@echo "... wd_lift_robot_uninstall"
 .PHONY : help

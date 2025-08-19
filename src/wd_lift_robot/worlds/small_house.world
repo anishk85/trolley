@@ -748,7 +748,7 @@
     </light>
     <include>
       <pose>-3.5 -4.5 0.0 0.0 0.0 1.58</pose>
-      <uri>model://turtlebot3_waffle_pi</uri>
+      <!-- <uri>model://turtlebot3_waffle_pi</uri> -->
     </include>
   </world>
 </sdf>
