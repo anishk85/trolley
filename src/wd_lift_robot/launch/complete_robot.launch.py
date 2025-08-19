@@ -3,7 +3,7 @@
 import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import IncludeLaunchDescription, TimerAction, DeclareLaunchArgument
+from launch.actions import IncludeLaunchDescription, TimerAction, DeclareLaunchArgument, ExecuteProcess
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import Command, LaunchConfiguration
 from launch_ros.actions import Node
@@ -18,6 +18,9 @@ def generate_launch_description():
     # Launch arguments
     use_nav2 = LaunchConfiguration('use_nav2')
     use_slam = LaunchConfiguration('use_slam')
+    use_sim_time = LaunchConfiguration('use_sim_time')
+    x_pose = LaunchConfiguration('x_pose')
+    y_pose = LaunchConfiguration('y_pose')
     
     # Robot Description
     urdf_file = os.path.join(pkg_path, 'urdf', 'robot.urdf.xacro')
@@ -29,12 +32,19 @@ def generate_launch_description():
     rviz_config_path = os.path.join(pkg_path, 'config', 'robot_view.rviz')
     controllers_config = os.path.join(pkg_path, 'config', 'controllers.yaml')
     
-    # Gazebo launch
-    gazebo = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(gazebo_ros_dir, 'launch', 'gazebo.launch.py')
-        ),
-        launch_arguments={'verbose': 'false'}.items()
+    # World file - Use the small_house.world from your package
+    world_file = os.path.join(pkg_path, 'worlds', 'small_house.world')
+    
+    # Launch Gazebo server with the house world
+    gzserver_cmd = ExecuteProcess(
+        cmd=['gzserver', world_file, '--verbose', '-s', 'libgazebo_ros_init.so', '-s', 'libgazebo_ros_factory.so'],
+        output='screen'
+    )
+
+    # Launch Gazebo client
+    gzclient_cmd = ExecuteProcess(
+        cmd=['gzclient'],
+        output='screen'
     )
     
     # Robot State Publisher
@@ -43,17 +53,23 @@ def generate_launch_description():
         executable='robot_state_publisher',
         name='robot_state_publisher',
         output='screen',
-        parameters=[{'use_sim_time': True, 'robot_description': robot_desc}]
+        parameters=[{'use_sim_time': use_sim_time, 'robot_description': robot_desc}]
     )
     
-    # Spawn Robot
+    # Spawn Robot at specific position in the house
     spawn_entity = TimerAction(
-        period=2.0,
+        period=3.0,
         actions=[
             Node(
                 package='gazebo_ros',
                 executable='spawn_entity.py',
-                arguments=['-topic', 'robot_description', '-entity', 'wd_lift_robot'],
+                arguments=[
+                    '-topic', 'robot_description', 
+                    '-entity', 'wd_lift_robot',
+                    '-x', x_pose,
+                    '-y', y_pose,
+                    '-z', '0.1'  # Slightly above ground
+                ],
                 output='screen'
             )
         ]
@@ -61,12 +77,12 @@ def generate_launch_description():
     
     # Controller Manager
     controller_manager = TimerAction(
-        period=4.0,
+        period=5.0,
         actions=[
             Node(
                 package="controller_manager",
                 executable="ros2_control_node",
-                parameters=[controllers_config, {'use_sim_time': True}],
+                parameters=[controllers_config, {'use_sim_time': use_sim_time}],
                 output="screen",
             )
         ]
@@ -74,7 +90,7 @@ def generate_launch_description():
     
     # Load controllers
     load_joint_state_controller = TimerAction(
-        period=6.0,
+        period=7.0,
         actions=[
             Node(
                 package="controller_manager",
@@ -86,7 +102,7 @@ def generate_launch_description():
     )
     
     load_diff_drive_controller = TimerAction(
-        period=8.0,
+        period=9.0,
         actions=[
             Node(
                 package="controller_manager",
@@ -98,7 +114,7 @@ def generate_launch_description():
     )
     
     load_lift_controller = TimerAction(
-        period=10.0,
+        period=11.0,
         actions=[
             Node(
                 package="controller_manager",
@@ -111,7 +127,7 @@ def generate_launch_description():
     
     # RViz
     rviz = TimerAction(
-        period=5.0,
+        period=6.0,
         actions=[
             Node(
                 package='rviz2',
@@ -119,21 +135,21 @@ def generate_launch_description():
                 name='rviz2',
                 output='screen',
                 arguments=['-d', rviz_config_path],
-                parameters=[{'use_sim_time': True}]
+                parameters=[{'use_sim_time': use_sim_time}]
             )
         ]
     )
     
     # SLAM Toolbox
     slam_toolbox = TimerAction(
-        period=12.0,
+        period=13.0,
         actions=[
             Node(
                 package='slam_toolbox',
                 executable='async_slam_toolbox_node',
                 name='slam_toolbox',
                 output='screen',
-                parameters=[slam_toolbox_config, {'use_sim_time': True}],
+                parameters=[slam_toolbox_config, {'use_sim_time': use_sim_time}],
                 condition=IfCondition(use_slam)
             )
         ]
@@ -141,7 +157,7 @@ def generate_launch_description():
     
     # Nav2 stack
     nav2_bringup = TimerAction(
-        period=15.0,
+        period=16.0,
         actions=[
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(
@@ -158,6 +174,12 @@ def generate_launch_description():
 
     return LaunchDescription([
         DeclareLaunchArgument(
+            'use_sim_time',
+            default_value='true',
+            description='Use simulation (Gazebo) clock if true'
+        ),
+        
+        DeclareLaunchArgument(
             'use_nav2',
             default_value='false',
             description='Start Nav2 navigation stack'
@@ -169,13 +191,31 @@ def generate_launch_description():
             description='Start SLAM'
         ),
         
-        gazebo,
+        DeclareLaunchArgument(
+            'x_pose',
+            default_value='0.0',  # Center of the house
+            description='Initial x position of robot'
+        ),
+        
+        DeclareLaunchArgument(
+            'y_pose',
+            default_value='0.0',  # Center of the house
+            description='Initial y position of robot'
+        ),
+        
+        # Gazebo components
+        gzserver_cmd,
+        gzclient_cmd,
+        
+        # Robot components
         robot_state_publisher,
         spawn_entity,
         controller_manager,
         load_joint_state_controller,
         load_diff_drive_controller,
         load_lift_controller,
+        
+        # Visualization and navigation
         rviz,
         slam_toolbox,
         nav2_bringup,
