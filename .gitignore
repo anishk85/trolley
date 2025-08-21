@@ -10,5 +10,4 @@ logs/
 .idea/
 *.swp
 *.swo
-*~
-kil_gazebo.sh
+
