@@ -1,0 +1,14 @@
+build/
+devel/
+install/
+log/
+logs/
+*.gv
+*.pdf
+*.dot
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+kil_gazebo.sh
