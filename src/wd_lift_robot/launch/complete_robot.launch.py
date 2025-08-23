@@ -12,11 +12,11 @@ from launch.conditions import IfCondition
 def generate_launch_description():
     # Package Directories
     pkg_path = get_package_share_directory('wd_lift_robot')
-    nav2_bringup_dir = get_package_share_directory('nav2_bringup')
+    # nav2_bringup_dir = get_package_share_directory('nav2_bringup')
     
     # Launch arguments
-    use_nav2 = LaunchConfiguration('use_nav2')
-    use_slam = LaunchConfiguration('use_slam')
+    # use_nav2 = LaunchConfiguration('use_nav2')
+    # use_slam = LaunchConfiguration('use_slam')
     use_sim_time = LaunchConfiguration('use_sim_time')
     x_pose = LaunchConfiguration('x_pose')
     y_pose = LaunchConfiguration('y_pose')
@@ -26,9 +26,9 @@ def generate_launch_description():
     robot_desc = Command(['xacro ', urdf_file])
     
     # Configuration files
-    nav2_params_path = os.path.join(pkg_path, 'config', 'nav2_params.yaml')
-    slam_toolbox_config = os.path.join(pkg_path, 'config', 'slam_toolbox_params.yaml')
-    rviz_config_path = os.path.join(pkg_path, 'config', 'robot_view.rviz')
+    # nav2_params_path = os.path.join(pkg_path, 'config', 'nav2_params.yaml')
+    # slam_toolbox_config = os.path.join(pkg_path, 'config', 'slam_toolbox_params.yaml')
+    # rviz_config_path = os.path.join(pkg_path, 'config', 'robot_view.rviz')
     controllers_config = os.path.join(pkg_path, 'config', 'controllers.yaml')
     
     # World file - Use the small_house.world from your package
@@ -38,7 +38,7 @@ def generate_launch_description():
     gzserver_cmd = ExecuteProcess(
         cmd=['gzserver', world_file, '--verbose', '-s', 'libgazebo_ros_init.so', '-s', 'libgazebo_ros_factory.so'],
         output='screen',
-        additional_env={'GAZEBO_MODEL_PATH': '', 'TURTLEBOT3_MODEL': ''}  # Clear TurtleBot3 env vars
+        additional_env={'GAZEBO_MODEL_PATH': ''}  # Clear TurtleBot3 env vars
     )
 
     # Launch Gazebo client
@@ -129,51 +129,51 @@ def generate_launch_description():
     )
     
     # RViz
-    rviz = TimerAction(
-        period=6.0,
-        actions=[
-            Node(
-                package='rviz2',
-                executable='rviz2',
-                name='rviz2',
-                output='screen',
-                arguments=['-d', rviz_config_path],
-                parameters=[{'use_sim_time': use_sim_time}]
-            )
-        ]
-    )
+    # rviz = TimerAction(
+    #     period=6.0,
+    #     actions=[
+    #         Node(
+    #             package='rviz2',
+    #             executable='rviz2',
+    #             name='rviz2',
+    #             output='screen',
+    #             arguments=['-d', rviz_config_path],
+    #             parameters=[{'use_sim_time': use_sim_time}]
+    #         )
+    #     ]
+    # )
     
     # SLAM Toolbox
-    slam_toolbox = TimerAction(
-        period=12.0,
-        actions=[
-            Node(
-                package='slam_toolbox',
-                executable='async_slam_toolbox_node',
-                name='slam_toolbox',
-                output='screen',
-                parameters=[slam_toolbox_config, {'use_sim_time': use_sim_time}],
-                condition=IfCondition(use_slam)
-            )
-        ]
-    )
+    # slam_toolbox = TimerAction(
+    #     period=12.0,
+    #     actions=[
+    #         Node(
+    #             package='slam_toolbox',
+    #             executable='async_slam_toolbox_node',
+    #             name='slam_toolbox',
+    #             output='screen',
+    #             parameters=[slam_toolbox_config, {'use_sim_time': use_sim_time}],
+    #             condition=IfCondition(use_slam)
+    #         )
+    #     ]
+    # )
     
     # Nav2 stack
-    nav2_bringup = TimerAction(
-        period=16.0,
-        actions=[
-            IncludeLaunchDescription(
-                PythonLaunchDescriptionSource(
-                    os.path.join(nav2_bringup_dir, 'launch', 'navigation_launch.py')
-                ),
-                launch_arguments={
-                    'use_sim_time': 'true',
-                    'params_file': nav2_params_path
-                }.items(),
-                condition=IfCondition(use_nav2)
-            )
-        ]
-    )
+    # nav2_bringup = TimerAction(
+    #     period=16.0,
+    #     actions=[
+    #         IncludeLaunchDescription(
+    #             PythonLaunchDescriptionSource(
+    #                 os.path.join(nav2_bringup_dir, 'launch', 'navigation_launch.py')
+    #             ),
+    #             launch_arguments={
+    #                 'use_sim_time': 'true',
+    #                 'params_file': nav2_params_path
+    #             }.items(),
+    #             condition=IfCondition(use_nav2)
+    #         )
+    #     ]
+    # )
 
     return LaunchDescription([
         DeclareLaunchArgument(
@@ -182,17 +182,17 @@ def generate_launch_description():
             description='Use simulation (Gazebo) clock if true'
         ),
         
-        DeclareLaunchArgument(
-            'use_nav2',
-            default_value='false',
-            description='Start Nav2 navigation stack'
-        ),
+        # DeclareLaunchArgument(
+        #     'use_nav2',
+        #     default_value='false',
+        #     description='Start Nav2 navigation stack'
+        # ),
         
-        DeclareLaunchArgument(
-            'use_slam',
-            default_value='true',
-            description='Start SLAM'
-        ),
+        # DeclareLaunchArgument(
+        #     'use_slam',
+        #     default_value='true',
+        #     description='Start SLAM'
+        # ),
         
         DeclareLaunchArgument(
             'x_pose',
@@ -219,9 +219,7 @@ def generate_launch_description():
         load_lift_controller,
         
         # Visualization and navigation
-        rviz,
-        slam_toolbox,
-        nav2_bringup,
+       
     ])
 
 # added comment for testing workflows
