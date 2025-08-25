@@ -41,22 +41,22 @@ diff_drive_controller:
     
     cmd_vel_timeout: 0.5
     
-    # Velocity and acceleration limits
+    # INCREASED velocity and acceleration limits
     linear:
       x:
         has_velocity_limits: true
         has_acceleration_limits: true
-        max_velocity: 1.0
-        max_acceleration: 1.0
-        min_acceleration: -1.0
+        max_velocity: 5.0      # Increased from 1.0
+        max_acceleration: 5.0  # Increased from 1.0
+        min_acceleration: -5.0 # Increased from -1.0
     
     angular:
       z:
         has_velocity_limits: true
         has_acceleration_limits: true
-        max_velocity: 1.0
-        max_acceleration: 1.0
-        min_acceleration: -1.0
+        max_velocity: 5.0      # Increased from 1.0
+        max_acceleration: 5.0  # Increased from 1.0
+        min_acceleration: -5.0 # Increased from -1.0
 
 lift_controller:
   ros__parameters:
@@ -72,7 +72,7 @@ lift_controller:
     state_publish_rate: 50.0
     action_monitor_rate: 20.0
     allow_partial_joints_goal: false
-    interpolation_method: spline
+    interpolation_method: splines
 
 joint_state_broadcaster:
   ros__parameters:
