@@ -20,6 +20,15 @@ install(
   DIRECTORY launch config maps rviz
   DESTINATION share/${PROJECT_NAME}
 )
+install(PROGRAMS
+  scripts/twist_converter.py
+  DESTINATION lib/${PROJECT_NAME}
+)
+install(PROGRAMS
+  scripts/laser_fix_diagnostic.py
+  DESTINATION lib/${PROJECT_NAME}
+)
+
 
 ################################################################################
 # Macro for ament package

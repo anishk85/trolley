@@ -173,12 +173,26 @@ def generate_launch_description():
                     output='screen',
                     parameters=[params_file, {'use_sim_time': use_sim_time}],
                     remappings=[
-                        ('/cmd_vel', '/cmd_vel_nav'),                      # Input from controller (Twist)
-                        ('/cmd_vel_smoothed', '/diff_drive_controller/cmd_vel')  # Output to robot (TwistStamped)
+                        ('/cmd_vel', '/cmd_vel_nav'),           # Input from controller
+                        ('/cmd_vel_smoothed', '/cmd_vel_nav_smooth')  # Output to converter
                     ]
                 )
             ]
         ),
+        
+        TimerAction(
+            period=22.5,
+            actions=[
+                Node(
+                    package='navigation',
+                    executable='twist_converter.py',
+                    name='twist_converter',
+                    output='screen',
+                    parameters=[{'use_sim_time': use_sim_time}]
+                )
+            ]
+        ),
+
 
         # Lifecycle Manager for localization
         TimerAction(
@@ -219,6 +233,18 @@ def generate_launch_description():
                             'velocity_smoother'
                         ]
                     }]
+                )
+            ]
+        ),
+        TimerAction(
+            period=24.5,
+            actions=[
+                Node(
+                    package='navigation',
+                    executable='laser_fix_diagnostic.py',
+                    name='laser_fix_diagnostic',
+                    output='screen',
+                    parameters=[{'use_sim_time': use_sim_time}]
                 )
             ]
         ),
