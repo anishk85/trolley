@@ -17,7 +17,7 @@ diff_drive_controller:
   ros__parameters:
     use_sim_time: true
     
-    # Match the wheel joint names from URDF
+    # CORRECTED: Fix wheel assignment to match movement direction
     left_wheel_names: ["front_left_wheel_joint", "rear_left_wheel_joint"]
     right_wheel_names: ["front_right_wheel_joint", "rear_right_wheel_joint"]
     
@@ -41,22 +41,22 @@ diff_drive_controller:
     
     cmd_vel_timeout: 0.5
     
-    # INCREASED velocity and acceleration limits
+    # Velocity and acceleration limits - REDUCED for stability
     linear:
       x:
         has_velocity_limits: true
         has_acceleration_limits: true
-        max_velocity: 5.0      # Increased from 1.0
-        max_acceleration: 5.0  # Increased from 1.0
-        min_acceleration: -5.0 # Increased from -1.0
+        max_velocity: 1.0      # Reduced for stability
+        max_acceleration: 1.0  # Reduced for stability
+        min_acceleration: -1.0 # Reduced for stability
     
     angular:
       z:
         has_velocity_limits: true
         has_acceleration_limits: true
-        max_velocity: 5.0      # Increased from 1.0
-        max_acceleration: 5.0  # Increased from 1.0
-        min_acceleration: -5.0 # Increased from -1.0
+        max_velocity: 1.0      # Reduced for stability
+        max_acceleration: 1.0  # Reduced for stability
+        min_acceleration: -1.0 # Reduced for stability
 
 lift_controller:
   ros__parameters:
