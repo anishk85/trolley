@@ -182,8 +182,8 @@
     <origin xyz="0 0 0.25" rpy="0 0 0"/>
   </joint>
 
-  <!-- LiDAR Sensor -->
-  <link name="laser">
+  <!-- LiDAR Sensor - Fixed frame name consistency -->
+  <link name="lidar_link">
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
@@ -204,9 +204,9 @@
     </inertial>
   </link>
 
-  <joint name="laser_joint" type="fixed">
+  <joint name="lidar_joint" type="fixed">
     <parent link="base_link"/>
-    <child link="laser"/>
+    <child link="lidar_link"/>
     <origin xyz="0.15 0 ${base_height/2 + 0.02}" rpy="0 0 0"/>
   </joint>
 
@@ -276,7 +276,7 @@
     <material>Gazebo/Blue</material>
   </gazebo>
 
-  <!-- Wheel physics -->
+  <!-- Wheel physics with correct friction -->
   <gazebo reference="front_left_wheel">
     <material>Gazebo/Black</material>
     <mu1>1.0</mu1>
@@ -321,8 +321,8 @@
     <fdir1>1 0 0</fdir1>
   </gazebo>
 
-  <!-- LiDAR sensor plugin -->
-  <gazebo reference="laser">
+  <!-- LiDAR sensor plugin with correct frame name -->
+  <gazebo reference="lidar_link">
     <material>Gazebo/Black</material>
     <sensor type="ray" name="rplidar_a1">
       <pose>0 0 0 0 0 0</pose>
@@ -354,7 +354,7 @@
           <remapping>~/out:=scan</remapping>
         </ros>
         <output_type>sensor_msgs/LaserScan</output_type>
-        <frame_name>laser</frame_name>
+        <frame_name>lidar_link</frame_name>
       </plugin>
     </sensor>
   </gazebo>

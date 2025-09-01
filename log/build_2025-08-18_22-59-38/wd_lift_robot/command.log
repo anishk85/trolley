@@ -1,6 +1,0 @@
-Invoking command in '/home/anish/your_robot_ws/build/wd_lift_robot': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/humble /usr/bin/cmake /home/anish/your_robot_ws/src/wd_lift_robot -DCMAKE_INSTALL_PREFIX=/home/anish/your_robot_ws/install/wd_lift_robot
-Invoked command in '/home/anish/your_robot_ws/build/wd_lift_robot' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/humble /usr/bin/cmake /home/anish/your_robot_ws/src/wd_lift_robot -DCMAKE_INSTALL_PREFIX=/home/anish/your_robot_ws/install/wd_lift_robot
-Invoking command in '/home/anish/your_robot_ws/build/wd_lift_robot': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/humble /usr/bin/cmake --build /home/anish/your_robot_ws/build/wd_lift_robot -- -j16 -l16
-Invoked command in '/home/anish/your_robot_ws/build/wd_lift_robot' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/humble /usr/bin/cmake --build /home/anish/your_robot_ws/build/wd_lift_robot -- -j16 -l16
-Invoking command in '/home/anish/your_robot_ws/build/wd_lift_robot': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/humble /usr/bin/cmake --install /home/anish/your_robot_ws/build/wd_lift_robot
-Invoked command in '/home/anish/your_robot_ws/build/wd_lift_robot' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/humble /usr/bin/cmake --install /home/anish/your_robot_ws/build/wd_lift_robot

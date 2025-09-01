@@ -14,15 +14,15 @@ def generate_launch_description():
     gazebo_ros_dir = get_package_share_directory('gazebo_ros')
     
     # Launch arguments
-    use_nav2 = LaunchConfiguration('use_nav2')
-    use_slam = LaunchConfiguration('use_slam')
+    # use_nav2 = LaunchConfiguration('use_nav2')
+    # use_slam = LaunchConfiguration('use_slam')
     
     # Robot Description
     urdf_file = os.path.join(pkg_path, 'urdf', 'robot.urdf.xacro')
     robot_desc = Command(['xacro ', urdf_file])
     
     # RViz config
-    rviz_config_path = os.path.join(pkg_path, 'config', 'robot_view.rviz')
+    # rviz_config_path = os.path.join(pkg_path, 'config', 'robot_view.rviz')
     
     # Gazebo launch
     gazebo = IncludeLaunchDescription(
@@ -58,14 +58,14 @@ def generate_launch_description():
     )
     
     # RViz
-    rviz = Node(
-        package='rviz2',
-        executable='rviz2',
-        name='rviz2',
-        output='screen',
-        arguments=['-d', rviz_config_path],
-        parameters=[{'use_sim_time': True}]
-    )
+    # rviz = Node(
+    #     package='rviz2',
+    #     executable='rviz2',
+    #     name='rviz2',
+    #     output='screen',
+    #     arguments=['-d', rviz_config_path],
+    #     parameters=[{'use_sim_time': True}]
+    # )
     
     # Controller Manager and Controllers
     load_joint_state_controller = TimerAction(
@@ -118,7 +118,7 @@ def generate_launch_description():
         robot_state_publisher,
         joint_state_publisher,
         spawn_entity,
-        rviz,
+        # rviz,
         load_joint_state_controller,
         load_diff_drive_controller,
         load_lift_controller,
